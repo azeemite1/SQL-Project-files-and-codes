@@ -1,0 +1,116 @@
+-- Show overview of data set
+Select*
+FROM [dbo].[Data1]
+
+Select*
+FROM [dbo].[Data2]
+
+-- What is the total Number of Rows in the dataset
+Select count(*)
+From Census_Project..Data1
+
+Select count(*)
+From Census_Project..Data2
+
+-- Select only data set for Jharkhand and Bihar
+
+Select* 
+From [dbo].[Data1]
+Where State in ('Jharkhand', 'Bihar')
+
+--What is the total population of India in the data set
+Select SUM(Population) as Total_Population
+FROM[dbo].[Data2]
+
+-- What is the Average growth of India in this data set
+Select ROUND(AVG(growth),2)*100 as Average_growth
+From [dbo].[Data1]
+
+-- What is the Average growth by State
+Select State, ROUND(AVG(growth), 2)*100 as Av_growth_by_State
+from [dbo].[Data1]
+GROUP BY State
+
+-- What is the Average sex ratio by State
+Select State, ROUND(AVG(Sex_Ratio), 0) as Av_sex_Ratio_by_State
+from [dbo].[Data1]
+GROUP BY State
+order by Av_sex_Ratio_by_State desc
+
+-- What is the average Literacy rate by State
+Select State, ROUND(AVG(Literacy), 0) as Av_Literacy
+from [dbo].[Data1]
+GROUP BY State
+order by Av_Literacy desc
+
+-- What is the average Literacy rate by state having av_literacy >90
+Select State, ROUND(AVG(Literacy),0) as Av_Literacy
+FROM[dbo].[Data1]
+GROUP BY State
+HAVING ROUND(AVG(Literacy),0) >90
+ORDER BY Av_Literacy desc
+
+-- The Top 3 State with Highest Growth Ratio
+
+Select Top 3 State, AVG(growth)*100 as Average_growth
+From[dbo].[Data1]
+Group by State
+order by Average_growth desc
+
+-- The bottom 3 state with lowest sex ratio
+Select top 3 State, ROUND(AVG(Sex_Ratio), 0) as Av_sex_Ratio_by_State
+from [dbo].[Data1]
+GROUP BY State
+order by Av_sex_Ratio_by_State asc
+
+-- Top and Bottom State
+drop table if exists #topstate
+Create table #topstate
+( State nvarchar(255), 
+topstate float
+
+)
+
+insert into #topstate
+select State, round(avg(Literacy),0) as avg_literacy
+from [dbo].[Data1]
+group by State
+
+
+select top 3 state, topstate
+from #topstate
+order by #topstate.topstate desc
+
+create table #bottomstate
+(State nvarchar(225), bottomstate float)
+insert into #bottomstate
+select State, round(avg(Literacy),0) as avg_literacy
+from [dbo].[Data1]
+group by State
+
+select top 3 state, bottomstate
+from #bottomstate
+order by #bottomstate.bottomstate asc;
+
+-- Joining the two tables as one - Using Union Operator
+select* from
+(select top 3 state, topstate
+from #topstate
+order by #topstate.topstate desc) a
+
+Union
+
+select* from(
+select top 3 state, bottomstate
+from #bottomstate
+order by #bottomstate.bottomstate asc) b;
+
+-- State starting with Letter "a"
+Select state
+From[dbo].[Data1]
+Where lower(State) like 'a%' or lower(state) like 'b%'
+
+--using distinct function.
+Select distinct state
+From[dbo].[Data1]
+Where lower(State) like 'a%' or lower(state) like 'b%'
