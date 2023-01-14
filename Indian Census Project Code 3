@@ -1,0 +1,75 @@
+use Census_Project
+ -- Overview of the dataset
+Select*
+FROM [dbo].[Data1]
+
+-- What is Population in Previous Year
+-- Previous_pop = population/(1+growth)
+
+Select c.district, c.state, round(c.population/(1+c.growth),0) as Previous_Pop, c.Population as Current_Pop from
+(Select a.District, a.state, a.growth, b.population from [dbo].[Data1] a inner join [dbo].[Data2] b on a.District = b.District) c
+
+-- Group by state
+Select d.state, sum(d.Previous_Pop) as Total_Prev, sum(d.Current_Pop) as Total_Current from
+(Select c.district, c.state, round(c.population/(1+c.growth),0) as Previous_Pop, c.Population as Current_Pop from
+(Select a.District, a.state, a.growth, b.population from [dbo].[Data1] a inner join [dbo].[Data2] b on a.District = b.District) c) d
+group by d.state
+
+--Previous Population Vs Current Population
+Select sum(e.Total_Prev) as Previous_Population, sum(e.Total_Current) as Current_Population from
+(Select d.state, sum(d.Previous_Pop) as Total_Prev, sum(d.Current_Pop) as Total_Current from
+(Select c.district, c.state, round(c.population/(1+c.growth),0) as Previous_Pop, c.Population as Current_Pop from
+(Select a.District, a.state, a.growth, b.population from [dbo].[Data1] a inner join [dbo].[Data2] b on a.District = b.District) c) d
+group by d.state) e
+
+
+-- Population Vs Area
+-- Create a common column to join the tables as one
+-- Use Inner Join to combine the two tables together using the keyy
+
+select h.*, i.*
+from
+(Select '1' as keyy, f.*
+from
+(Select sum(e.Total_Prev) as Previous_Population, sum(e.Total_Current) as Current_Population from
+(Select d.state, sum(d.Previous_Pop) as Total_Prev, sum(d.Current_Pop) as Total_Current from
+(Select c.district, c.state, round(c.population/(1+c.growth),0) as Previous_Pop, c.Population as Current_Pop from
+(Select a.District, a.state, a.growth, b.population from [dbo].[Data1] a inner join [dbo].[Data2] b on a.District = b.District) c) d
+group by d.state) e) f) h
+inner join
+(Select '1' as keyy, g.*
+from
+(Select sum(area_km2) as Total_Area
+from[dbo].[Data2]) g) i on h.keyy = i.keyy
+
+-- To get the Ppopulation and Area
+
+select j.total_area/j.previous_population as previous_Population_Vs_area, j.total_area/j.Current_Population as Current_Population_Vs_area
+from
+(select h.*, i.Total_Area -- need to specify column as both have the keyy column in common
+from
+(Select '1' as keyy, f.*
+from
+(Select sum(e.Total_Prev) as Previous_Population, sum(e.Total_Current) as Current_Population from
+(Select d.state, sum(d.Previous_Pop) as Total_Prev, sum(d.Current_Pop) as Total_Current from
+(Select c.district, c.state, round(c.population/(1+c.growth),0) as Previous_Pop, c.Population as Current_Pop from
+(Select a.District, a.state, a.growth, b.population from [dbo].[Data1] a inner join [dbo].[Data2] b on a.District = b.District) c) d
+group by d.state) e) f) h
+inner join
+(Select '1' as keyy, g.*
+from
+(Select sum(area_km2) as Total_Area
+from[dbo].[Data2]) g) i on h.keyy = i.keyy) j
+
+
+-- Top 3 Districts State from each State with Highest Literacy ratio
+		-- Rank the the state
+		-- Create a Sub querry and use the where function to filter with top 3
+Select*
+FROM [dbo].[Data1]
+
+Select a.*
+from
+(Select district, state, Literacy, RANK() over(partition by state order by literacy desc) rnk
+from[dbo].[Data1]) a
+where a.rnk in (1,2,3) order by a.state
