@@ -1,0 +1,44 @@
+use Census_Project
+ -- Overview of the dataset
+Select*
+FROM [dbo].[Data1]
+
+Select*
+FROM [dbo].[Data2]
+
+-- Joining the two data set together
+select a.District, a.state, a.growth, a.sex_ratio, a.Literacy, b.Area_km2, b.population from [dbo].[Data1] a inner join [dbo].[Data2] b on a.District = b.District
+
+-- Calculate the total number of males and females
+-- Sex_ratio = Female/Male ---1  Female = Sex_ratio * Male
+-- Female+Male = Population
+-- Female = Population - Male
+ -- Sex_ratio * Male = Population - Male
+-- Sex_ratio + Male * Male = Population
+-- Population = Male(Sex_ratio + 1)
+-- Male = Population/(Sex_ratio +1 ) 
+-- Female = Population - (Population/(Sex_ratio + 1))
+
+-- Total Male and Female
+Select c.district, c.state, round(c.population/(sex_ratio+1),0) as Male, round(c.Population -(c.population/(c.Sex_Ratio+1)),0) as Female
+from (select a.District, a.state, a.growth, a.sex_ratio, a.Literacy, b.Area_km2, b.population from [dbo].[Data1] a inner join [dbo].[Data2] b on a.District = b.District) c
+
+
+-- Group by state
+select d.State, sum(d.male) as Total_Male, sum(d.female) as Total_Female
+From
+(Select c.district, c.state, round(c.population/(sex_ratio+1),0) as Male, round(c.Population -(c.population/(c.Sex_Ratio+1)),0) as Female
+from (select a.District, a.state, a.growth, a.sex_ratio, a.Literacy, b.Area_km2, b.population from [dbo].[Data1] a inner join [dbo].[Data2] b on a.District = b.District) c) d
+group by d.State
+
+-- Total Literacy Rate
+-- Literacy Ratio = Literate People/Population
+-- Total Literate People = Literacy Ratio * Population
+-- Total illetrate people = (1-literacy ratio)*population
+
+select d.state, sum(d.total_literate) Total_Lit, sum(d.total_illetrate) Total_Ill from
+(select c.District, c.State, round(c.Literacy_Ratio*c.Population, 0) as Total_Literate, round((1-c.Literacy_Ratio)*c.Population,0) as Total_Illetrate from
+(Select a.district, a.state, a.growth, a.sex_ratio, a.literacy/100 as Literacy_Ratio, b.population 
+From[dbo].[Data1] a
+Inner Join [dbo].[Data2] b on a.district = b.district ) c) d
+group by d.State
